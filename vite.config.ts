@@ -24,6 +24,11 @@ export default defineConfig(({ mode }) => {
       sourcemap: notProduction ? 'inline' : false,
       minify: notProduction ? false : 'terser',
       chunkSizeWarningLimit: 5000,
+      rollupOptions: {
+        output: {
+          format: 'iife',
+        },
+      },
     },
     esbuild: {
       drop: notProduction ? [] : ['console', 'debugger'],
