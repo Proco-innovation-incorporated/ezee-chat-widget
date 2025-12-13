@@ -63,7 +63,7 @@ declare const window: any;
     if (!config.privateToken) {
       throw new Error("Ezee Assist Agent requires a Private Token");
     }
-    elif (!config.userEmail) {
+    else if (!config.userEmail) {
       throw new Error("Ezee Assist Agent requires a User Email");
     }
   
@@ -78,7 +78,7 @@ declare const window: any;
         publicToken: import.meta.env.VITE_PUBLIC_TOKEN,
       });
     }
-    elif (import.meta.env.VITE_PRIVATE_TOKEN) {
+    else if (import.meta.env.VITE_PRIVATE_TOKEN) {
       window.ezee.setupPrivateChatConfig({
         privateToken: import.meta.env.VITE_PRIVATE_TOKEN,
         userEmail: import.meta.env.VITE_USER_EMAIL,
