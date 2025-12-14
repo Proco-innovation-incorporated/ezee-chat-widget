@@ -166,10 +166,7 @@ export default {
         prompt: "prompt",
         message: "message",
       },
-      stream: {
-        rawBuffer: "",
-        inStream: false,
-      },
+      streamBuffers: {},
     };
   },
   computed: {
@@ -181,9 +178,6 @@ export default {
     backgroundColor() {
       return this.chosenColor === "dark" ? this.colors.messageList.bg : "#fff";
     },
-    inStream() {
-      return this.stream.inStream;
-    },
     ...mapState(["error"]),
   },
   watch: {
@@ -192,9 +186,6 @@ export default {
         this.messageList = [];
       }
     },
-    //inStream(newValue, oldValue) {
-    //  console.log(oldValue, "->",newValue);
-    //},
   },
   created() {
   },
@@ -278,19 +269,20 @@ export default {
         );
 
         if (isStreamMessage) {
-          this.stream.inStream = true;
           message.type = "stream";
           const isStreaming = message.data.more = extras.message.more;
           const groupId = extras.message.group_id;
+          let rawBuffer = this.streamBuffers?.[groupId] || "";
 
           // use the last text message with same groupId
           const idx = this.messageList.findLastIndex(
             (m) => m.groupId === groupId
           );
+          //console.log("Group ID", groupId, idx);
           const oldMessage = idx !== -1 ? this.messageList[idx] : undefined;
 
-          this.stream.rawBuffer += response;
-          const repaired = parseIncompleteMarkdown(this.stream.rawBuffer);
+          rawBuffer += response;
+          const repaired = parseIncompleteMarkdown(rawBuffer);
           const blocks = parseBlocks(repaired);
           //console.log(blocks);
           let cleaned = blocks.join('');
@@ -302,8 +294,12 @@ export default {
 
           // last chunk, end the stream
           if (!isStreaming) {
-            this.stream.rawBuffer = "";
-            this.stream.inStream = false;
+            if (groupId in this.streamBuffers) {
+              delete this.streamBuffers[groupId];
+            }
+          }
+          else {
+            this.streamBuffers[groupId] = rawBuffer;
           }
 
           if (oldMessage) {
@@ -336,7 +332,9 @@ export default {
           ...media_urls,
         ];
 
-        this.showTypingIndicator = false;
+        if (Object.keys(this.streamBuffers).length < 2) {
+          this.showTypingIndicator = false;
+        }
       }
     },
 
