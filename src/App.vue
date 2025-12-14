@@ -278,7 +278,7 @@ export default {
           const idx = this.messageList.findLastIndex(
             (m) => m.groupId === groupId
           );
-          console.log("Group ID", groupId, idx);
+          //console.log("Group ID", groupId, idx);
           const oldMessage = idx !== -1 ? this.messageList[idx] : undefined;
 
           rawBuffer += response;
@@ -332,7 +332,9 @@ export default {
           ...media_urls,
         ];
 
-        this.showTypingIndicator = false;
+        if (Object.keys(this.streamBuffers).length < 2) {
+          this.showTypingIndicator = false;
+        }
       }
     },
 
