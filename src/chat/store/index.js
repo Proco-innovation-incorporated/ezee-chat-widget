@@ -97,10 +97,19 @@ async function loadOrgBranding() {
   if (!chatConfig.value?.apiBaseUrl) {
     throw new Error('Cannot fetch Org Branding. Set up configs before calling');
   }
-  const url = `${chatConfig.value.apiBaseUrl}/api/publicchat/org/branding?token=${chatConfig.value.publicToken}`
+
+  const url = new URL(chatConfig.value.apiBaseUrl);
+  if (chatConfig.value.__type === "private") {
+    url.pathname = "/api/chat/private/branding";
+    url.searchParams.set("token", chatConfig.value.privateToken);
+  }
+  else {
+    url.pathname = "/api/publicchat/org/branding";
+    url.searchParams.set("token", chatConfig.value.publicToken);
+  }
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url.toString());
     if (!response.ok) {
       throw new Error(`Response status: ${response.status}`);
     }

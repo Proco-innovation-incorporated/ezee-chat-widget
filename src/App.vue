@@ -368,7 +368,7 @@ export default {
 
       const attachments = [];
       
-      // TODO review and disable
+      // TODO BBORIE review and selectively enable
       /*
       if (message.files?.length) {
         const access_token = store.tokens.access_token;

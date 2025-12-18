@@ -17,10 +17,10 @@ declare const window: any;
 
   store.setupFirst();
 
-  // TODO add separate private chat config
   window.ezee.setupChatConfig = (props: any = {}) => {
     const config = {
       ...{
+        __type: "public",
         publicToken: undefined,
         botTitle: "EZee Assist Public Agent",
         apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
@@ -46,6 +46,7 @@ declare const window: any;
   window.ezee.setupPrivateChatConfig = (props: any = {}) => {
     const config = {
       ...{
+        __type: "private",
         privateToken: undefined,
         userEmail: undefined,
         botTitle: "EZee Assist Agent",
