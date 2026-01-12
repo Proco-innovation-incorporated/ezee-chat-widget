@@ -18,6 +18,7 @@
     :show-deletion="true"
     :title="botTitle"
     :title-image-url="titleImageUrl"
+    :legal="legal"
     :disable-user-list-toggle="true"
     @onType="handleOnType"
     @edit="editMessage"
@@ -118,6 +119,7 @@ export default {
         orgBranding.value?.org_logo ||
         (logoPathPrefix + "/bot-logo.png")
       ),
+      legal: orgBranding.value?.legal || "",
       messageList: [],
       newMessagesCount: 0,
       isChatOpen: false,

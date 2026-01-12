@@ -25,6 +25,7 @@
       :on-user-input-submit="onMessageWasSent"
       :participants="participants"
       :title="chatWindowTitle"
+      :legal="legal"
       :is-open="isOpen"
       :show-emoji="showEmoji"
       :show-feedback="showFeedback"
@@ -158,6 +159,10 @@ export default {
     titleImageUrl: {
       type: String,
       default: () => ""
+    },
+    legal: {
+      type: String,
+      default: () => "",
     },
     onMessageWasSent: {
       type: Function,

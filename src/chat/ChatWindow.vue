@@ -74,6 +74,7 @@
       :colors="colors"
       @onType="$emit('onType')"
       @edit="$emit('edit', $event)"
+      :legal="legal"
     />
     <div :class="{ 'is-loaded': !isLoaded }"></div>
   </div>
@@ -122,6 +123,11 @@ export default {
     title: {
       type: String,
       required: true,
+    },
+    legal: {
+      type: String,
+      required: false,
+      default: () => "",
     },
     onUserInputSubmit: {
       type: Function,
