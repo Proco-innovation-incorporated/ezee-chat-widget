@@ -195,11 +195,11 @@ export default {
   },
   mounted() {
     emitter.$on("onopen", (event) => {
-      console.log('socket opened event');
+      //console.log('socket opened event');
     });
 
     emitter.$on("onclose", (event) => {
-      console.log('socket closed event');
+      //console.log('socket closed event');
     });
 
     emitter.$on("onmessage", (event) => {
@@ -225,7 +225,6 @@ export default {
   },
   methods: {
     handleItemSocketAnswer(event) {
-      console.log("event", event);
       const extras = event.extras || {};
 
       if (event.msg_type === "system") {
@@ -346,7 +345,6 @@ export default {
         }
       }
 
-      console.log("message", message);
       this.messageList = [
         ...this.messageList,
         ...media_urls,
