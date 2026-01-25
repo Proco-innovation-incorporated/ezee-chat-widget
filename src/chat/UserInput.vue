@@ -5,6 +5,12 @@
       :colors="colors"
       @sendSuggestion="_submitSuggestion"
     />
+    <div
+      class="sc-legal"
+      v-if="legal && legal.length > 0"
+    >
+      {{ legal }}
+    </div>
     <form
       class="sc-user-input"
       :class="{ active: inputActive }"
@@ -233,6 +239,11 @@ export default {
     suggestions: {
       type: Array,
       default: () => [],
+    },
+    legal: {
+      type: String,
+      required: false,
+      default: () => "",
     },
     showFile: {
       type: Boolean,

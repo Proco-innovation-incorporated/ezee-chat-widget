@@ -118,6 +118,7 @@ async function loadOrgBranding() {
       bot_name: null,
       bot_icon: null,
       org_logo: null,
+      legal: null,
       highlight_color: '#4e8cff',
     });
   }

@@ -18,6 +18,7 @@
     :show-deletion="true"
     :title="botTitle"
     :title-image-url="titleImageUrl"
+    :legal="legal"
     :disable-user-list-toggle="true"
     @onType="handleOnType"
     @edit="editMessage"
@@ -118,7 +119,9 @@ export default {
         orgBranding.value?.org_logo ||
         (logoPathPrefix + "/bot-logo.png")
       ),
+      legal: orgBranding.value?.legal || "",
       messageList: [],
+      wholeMessageMap: new Map(),
       newMessagesCount: 0,
       isChatOpen: false,
       showTypingIndicator: true,
@@ -184,25 +187,32 @@ export default {
     error(value) {
       if (!value) {
         this.messageList = [];
+        this.wholeMessageMap.clear();
       }
     },
   },
   created() {
   },
   mounted() {
+    emitter.$on("onopen", (event) => {
+      //console.log('socket opened event');
+    });
+
+    emitter.$on("onclose", (event) => {
+      //console.log('socket closed event');
+    });
+
     emitter.$on("onmessage", (event) => {
       if (Array.isArray(event)) {
-        event.forEach((item) => {
-          Array.isArray(item)
-            ? item.forEach(
-              (nested) => this.handleItemSocketAnswer(nested)
-            )
-            : this.handleItemSocketAnswer(item);
+        const messages = event.flat(2);
+        messages.forEach((item) => {
+          this.handleItemSocketAnswer(item);
         });
 
         if (
-          event.length == 1 &&
-          this.types[event[0].msg_type] &&
+          messages.length == 1 &&
+          this.types[messages[0].msg_type] &&
+          //messages[0].msg_type !== "me" &&
           !this.isChatOpen
         ) {
           this.newMessagesCount = this.newMessagesCount + 1;
@@ -230,111 +240,118 @@ export default {
         return;
       }
 
-      if (!event.msg_type || this.types[event.msg_type]) {
-        const media_urls = (
-          event.media_urls?.map(
-            (i) => getMediaMessage(`bot`, event.id, i.url)
-          ) || []
-        );
+      const processMessage = (!event.msg_type || this.types[event.msg_type]);
+      if (!processMessage) return;
 
-        let response = event.response;
-        const isStreamMessage = extras.message?.streaming === true;
+      /* disabled for public chat
+      const media_urls = (
+        event.media_urls?.map(
+          (i) => getMediaMessage(`bot`, event.id, i.url)
+        ) || []
+      );
+      */
+      const media_urls = [];
 
-        let citations = (event.citations || []).reduce(
-          (o, cur) => ({...o, [cur.anchor]: cur}), {}
-        );
-        let message = Object.assign(
-          {},
-          {
-            type: "text",
-            data: {
-              text: (
-                isStreamMessage
-                  ? response
-                  : (
-                    event.msg_type !== "me"
-                      ? processCitations(mdToHtml(response), citations)
-                      : mdToHtml(response)
-                  )
-              ),
-              attachments: event?.attachments || [],
-              citations: citations,
-            },
-            author: this.types[event.msg_type] || "bot",
+      let response = event.response;
+      const isStreamMessage = extras.message?.streaming === true;
+
+      let citations = (event.citations || []).reduce(
+        (o, cur) => ({...o, [cur.anchor]: cur}), {}
+      );
+      let message = Object.assign(
+        {},
+        {
+          type: "text",
+          data: {
+            text: (
+              isStreamMessage
+                ? response
+                : (
+                  event.msg_type !== "me"
+                    ? processCitations(mdToHtml(response), citations)
+                    : mdToHtml(response)
+                )
+            ),
+            attachments: event?.attachments || [],
+            citations: citations,
           },
-          {
-            id: event.id,
-            groupId: extras.message?.group_id,
-          }
+          author: this.types[event.msg_type] || "bot",
+        },
+        {
+          id: event.id,
+          groupId: extras.message?.group_id,
+        }
+      );
+
+      if (isStreamMessage) {
+        message.type = "stream";
+        const isStreaming = message.data.more = extras.message.more;
+        const groupId = extras.message.group_id;
+        let rawBuffer = this.streamBuffers?.[groupId] || "";
+
+        // use the last text message with same groupId
+        const idx = this.messageList.findLastIndex(
+          (m) => m.groupId === groupId
         );
+        //console.log("Group ID", groupId, idx);
+        const oldMessage = idx !== -1 ? this.messageList[idx] : undefined;
 
-        if (isStreamMessage) {
-          message.type = "stream";
-          const isStreaming = message.data.more = extras.message.more;
-          const groupId = extras.message.group_id;
-          let rawBuffer = this.streamBuffers?.[groupId] || "";
+        rawBuffer += response;
+        const repaired = parseIncompleteMarkdown(rawBuffer);
+        const blocks = parseBlocks(repaired);
+        //console.log(blocks);
+        let cleaned = blocks.join('');
+        //console.log("cleaned", cleaned);
 
-          // use the last text message with same groupId
-          const idx = this.messageList.findLastIndex(
-            (m) => m.groupId === groupId
-          );
-          //console.log("Group ID", groupId, idx);
-          const oldMessage = idx !== -1 ? this.messageList[idx] : undefined;
+        if (cleaned.lastIndexOf("_") === cleaned.length - 1) {
+          cleaned = cleaned.slice(0, cleaned.length - 1);
+        }
 
-          rawBuffer += response;
-          const repaired = parseIncompleteMarkdown(rawBuffer);
-          const blocks = parseBlocks(repaired);
-          //console.log(blocks);
-          let cleaned = blocks.join('');
-          //console.log("cleaned", cleaned);
-
-          if (cleaned.lastIndexOf("_") === cleaned.length - 1) {
-            cleaned = cleaned.slice(0, cleaned.length - 1);
+        // last chunk, end the stream
+        if (!isStreaming) {
+          if (groupId in this.streamBuffers) {
+            delete this.streamBuffers[groupId];
           }
+        }
+        else {
+          this.streamBuffers[groupId] = rawBuffer;
+        }
 
-          // last chunk, end the stream
-          if (!isStreaming) {
-            if (groupId in this.streamBuffers) {
-              delete this.streamBuffers[groupId];
-            }
-          }
-          else {
-            this.streamBuffers[groupId] = rawBuffer;
-          }
+        if (oldMessage) {
+          citations = message.data.citations = {
+            ...oldMessage.data.citations,
+            ...message.data.citations,
+          };
+        }
 
-          if (oldMessage) {
-            citations = message.data.citations = {
-              ...oldMessage.data.citations,
-              ...message.data.citations,
-            };
-          }
+        message.data.text = processCitations(mdToHtml(cleaned), citations);
+        //console.log(message.data.text);
 
-          message.data.text = processCitations(mdToHtml(cleaned), citations);
-          //console.log(message.data.text);
-
-          if (oldMessage) {
-            message.data.attachments = [
-              ...oldMessage.data.attachments,
-              ...message.data.attachments,
-            ];
-            this.messageList.splice(idx, 1, message);
-          }
-          else {
-            this.messageList.push(message);
-          }
+        if (oldMessage) {
+          message.data.attachments = [
+            ...oldMessage.data.attachments,
+            ...message.data.attachments,
+          ];
+          this.messageList.splice(idx, 1, message);
         }
         else {
           this.messageList.push(message);
         }
-
-        this.messageList = [
-          ...this.messageList,
-          ...media_urls,
-        ];
-
-        if (Object.keys(this.streamBuffers).length < 2) {
-          this.showTypingIndicator = false;
+      }
+      else {
+        if (!this.wholeMessageMap.has(message.id)) {
+          this.messageList.push(message);
+          this.wholeMessageMap.set(message.id, message);
         }
+      }
+
+      this.messageList = [
+        ...this.messageList,
+        ...media_urls,
+      ];
+
+      if (Object.keys(this.streamBuffers).length < 2) {
+        this.showTypingIndicator = false;
       }
     },
 
