@@ -9,7 +9,18 @@ const maxBackoffSleep = 30; // seconds
 let socket;
 let connectAttempt = 0;
 let attemptingConnection = false;
-let firstConnection = true;
+
+export const debounce = (fn, wait = 500) => {
+  let timeoutId;
+  return (...args) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      fn(...args);
+    }, wait);
+  };
+};
 
 export const reconnect = (connectNow=false) => {
   if (attemptingConnection) {
@@ -66,7 +77,6 @@ export const createSocketConnection = () => {
     store.setState("connecting", true);
     socket = new WebSocket(
       `${chatConfig.value.wsBaseUrl}/api/publicchat/in?token=${chatConfig.value.publicToken}&session_id=${store.state.value.sessionId}&first_connection=1`
-      //`${chatConfig.value.wsBaseUrl}/api/publicchat/in?token=${chatConfig.value.publicToken}&session_id=${store.state.value.sessionId}&first_connection=${firstConnection ? 1 : 0}`
     );
     connectAttempt++;
 
@@ -76,11 +86,11 @@ export const createSocketConnection = () => {
         store.setState("loadedConnection", true);
         store.setState("connecting", false);
         store.setState("error", null);
-        firstConnection = false;
       }, 1000);
-      console.debug("[socket] Connected");
+      console.log("socket open");
       store.setSocket(socket);
       connectAttempt = 0;
+      emitter.$emit("onopen");
     };
 
     socket.onmessage = function (event) {
@@ -98,6 +108,7 @@ export const createSocketConnection = () => {
     };
 
     socket.onclose = function (event) {
+      console.log('socket closed');
       if (event.wasClean) {
         store.setState("error", 1005);
         console.debug(
@@ -115,8 +126,8 @@ export const createSocketConnection = () => {
         //throw new Error(ErrorTypes["1001"]);
       }
       // emitting new event so that the interface can update itself
-      emitter.$emit("connection-close");
-      reconnect();
+      emitter.$emit("onclose");
+      debounce(reconnect, 100);
     };
 
     socket.onerror = function (error) {
