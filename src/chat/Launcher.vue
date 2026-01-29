@@ -12,7 +12,12 @@
       </div>
       <template v-if="loadedConnection">
         <img v-if="isOpen" class="sc-closed-icon" :src="icons.close.img" alt="" />
-        <img v-else class="sc-open-icon" :src="icons.open.img" alt="" />
+        <img
+          v-else
+          class="sc-open-icon"
+          :src="botIcon"
+          alt=""
+        />
       </template>
 
       <div v-show="!loadedConnection" style="position: absolute; top:-100%; left: 0; width: 100%; height: 100%">
@@ -246,13 +251,18 @@ export default {
   computed: {
     chatWindowTitle() {
       if (this.title !== "") return this.title
-
-      // if (this.participants.length === 0) return "You"
-      // if (this.participants.length > 1) return "You, " + this.participants[0].name + " & others"
-
       return "";
-      // return "You & " + this.participants[0].name
-    }
+    },
+    botIcon() {
+      const defaultIcon = this.icons.open.img;
+      if (this.chatConfig.useLogoForOpenIcon !== true) return defaultIcon;
+
+      return (
+        this.orgBranding.org_logo ||
+        this.orgBranding.bot_icon ||
+        defaultIcon
+      );
+    },
   },
   watch: {
     $props: {
@@ -267,10 +277,16 @@ export default {
   },
   setup() {
     const {
+      orgBranding,
       chatConfig,
       loadedConnection,
       error
-    } = mapState(["chatConfig", "loadedConnection", "error"]);
+    } = mapState([
+      "orgBranding",
+      "chatConfig",
+      "loadedConnection",
+      "error"
+    ]);
 
     setTimeout(() => {
       startSpinnerByName("showLauncher");
@@ -285,6 +301,7 @@ export default {
     });
 
     return {
+      orgBranding,
       chatConfig,
       loadedConnection,
       error,
