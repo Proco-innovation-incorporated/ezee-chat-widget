@@ -25,7 +25,7 @@ declare const window: any;
         wsBaseUrl: import.meta.env.VITE_WS_BASE_URL,
         logoPathPrefix: "",
         enableAttachments: false,
-        useLogoForOpenIcon: false,
+        useLogoForOpenIcon: true,
       },
       ...props,
     };

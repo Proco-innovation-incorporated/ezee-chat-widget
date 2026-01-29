@@ -14,7 +14,7 @@
         <img v-if="isOpen" class="sc-closed-icon" :src="icons.close.img" alt="" />
         <img
           v-else
-          class="sc-open-icon"
+          :class="botIconClass"
           :src="botIcon"
           alt=""
         />
@@ -262,6 +262,12 @@ export default {
         this.orgBranding.bot_icon ||
         defaultIcon
       );
+    },
+    botIconClass() {
+      const defaultCls = "sc-open-icon";
+      if (this.chatConfig.useLogoForOpenIcon !== true) return defaultCls;
+
+      return "sc-open-icon-logo";
     },
   },
   watch: {
