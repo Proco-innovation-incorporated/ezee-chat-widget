@@ -529,6 +529,17 @@ a.chatLink {
   opacity: 1;
 }
 
+.sc-launcher .sc-open-icon-logo {
+  padding: 20px;
+  box-sizing: border-box;
+  opacity: 1;
+  width: 70px;
+  height: 70px;
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+}
+
 .sc-launcher.opened .sc-open-icon {
   transform: rotate(-90deg);
   opacity: 1;
