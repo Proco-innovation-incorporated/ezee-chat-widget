@@ -294,9 +294,9 @@ export default {
       "error"
     ]);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       startSpinnerByName("showLauncher");
-      createSocketConnection();
+      await createSocketConnection();
     }, 0);
     watch(loadedConnection, (value) => {
       if (value) {

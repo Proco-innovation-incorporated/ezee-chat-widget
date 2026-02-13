@@ -92,15 +92,40 @@ function closeSocketConnection() {
   store.socket = null;
 }
 
-async function loadOrgBranding() {
+const buildUrl = (baseUrl, pathname, params) => {
+  const url = new URL(baseUrl);
+  url.pathname = pathname;
+  for (const key in params) {
+    url.searchParams.set(key, params[key]);
+  }
+
+  return url;
+}
+
+const buildUrlPath = (chatConfig, pathTemplate) => {
+  const orgToken = chatConfig.value.privateToken || chatConfig.value.publicToken;
+  const isPrivateToken = orgToken === chatConfig.value.privateToken;
+  const pathSegment = isPrivateToken ? "streamchat" : "publicchat";
+  return pathTemplate.replace("<pathSegment>", pathSegment);
+};
+
+const loadOrgBranding = async () => {
   const { chatConfig } = mapState(["chatConfig"]);
-  if (!chatConfig.value?.apiBaseUrl) {
+  const orgToken = chatConfig.value.privateToken || chatConfig.value.publicToken;
+  if (!chatConfig.value?.apiBaseUrl || !orgToken) {
     throw new Error('Cannot fetch Org Branding. Set up configs before calling');
   }
-  const url = `${chatConfig.value.apiBaseUrl}/api/publicchat/org/branding?token=${chatConfig.value.publicToken}`
+
+  const url = buildUrl(
+    chatConfig.value.apiBaseUrl,
+    buildUrlPath(chatConfig, "/api/<pathSegment>/org/branding"),
+    {
+      token: orgToken
+    },
+  );
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url.toString());
     if (!response.ok) {
       throw new Error(`Response status: ${response.status}`);
     }
@@ -124,10 +149,45 @@ async function loadOrgBranding() {
   }
 }
 
+const getPrivateConnectToken = async () => {
+  const { chatConfig } = mapState(["chatConfig"]);
+  if (
+    !chatConfig.value?.apiBaseUrl ||
+    !chatConfig.value.privateToken ||
+    !chatConfig.value?.userEmail
+  ) {
+    throw new Error('Cannot get User Connect Token . Set up configs before calling');
+  }
+
+  const url = buildUrl(
+    chatConfig.value.apiBaseUrl,
+    buildUrlPath(chatConfig, "/api/<pathSegment>/org/auth"),
+    {
+      token: chatConfig.value.privateToken,
+      email: chatConfig.value.userEmail,
+    },
+  );
+
+  try {
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const result = await response.json()
+    return result.token;
+  }
+  catch(error) {
+    console.error("Error gettting User Connect Token", error.message)
+  }
+}
+
 export default store;
 export {
   mapState,
   sendSocketMessage,
   closeSocketConnection,
-  loadOrgBranding
+  loadOrgBranding,
+  buildUrlPath,
+  getPrivateConnectToken,
 };

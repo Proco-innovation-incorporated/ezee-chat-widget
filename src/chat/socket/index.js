@@ -1,4 +1,8 @@
-import store, { mapState }  from "../store/index.js";
+import store, {
+  buildUrlPath,
+  getPrivateConnectToken,
+  mapState
+}  from "../store/index.js";
 import { emitter } from "../event/index.js";
 import { ErrorTypes } from "../../error.js";
 
@@ -22,7 +26,7 @@ export const debounce = (fn, wait = 500) => {
   };
 };
 
-export const reconnect = (connectNow=false) => {
+export const reconnect = async (connectNow=false) => {
   if (attemptingConnection) {
     console.debug("Already attempting Websocket connection. Skipping");
     return;
@@ -41,7 +45,7 @@ export const reconnect = (connectNow=false) => {
 
   if (connectNow) {
     try {
-      createSocketConnection();
+      await createSocketConnection();
     }
     catch(e) {}
   }
@@ -57,27 +61,45 @@ export const reconnect = (connectNow=false) => {
         resolve("");
       }, sleepFor * 1000);
     });
-    promise.then(() => {
+    promise.then(async () => {
       try {
-        createSocketConnection();
+        await createSocketConnection();
       }
       catch(e) {}
     });
   }
 }
 
-export const createSocketConnection = () => {
-  const createConnection = () => {
+export const createSocketConnection = async () => {
+
+  const buildUrl = async () => {
+    const { chatConfig } = mapState(["chatConfig"]);
+
+
+    const url = new URL(chatConfig.value.wsBaseUrl);
+    url.pathname = buildUrlPath(chatConfig, "/api/<pathSegment>/in");
+
+    if (chatConfig.value.privateToken && chatConfig.value.userEmail) {
+      const connectToken = await getPrivateConnectToken();
+      url.searchParams.set("token", connectToken);
+    }
+    else {
+      url.searchParams.set("token", chatConfig.value.publicToken);
+      url.searchParams.set("session_id", store.state.value.sessionId);
+    }
+
+    return url.toString();
+  }
+
+  const createConnection = async () => {
     if (socket) {
       socket.close();
       socket = null;
     }
 
-    const { chatConfig } = mapState(["chatConfig"]);
+    const websocketUrl = await buildUrl();
     store.setState("connecting", true);
-    socket = new WebSocket(
-      `${chatConfig.value.wsBaseUrl}/api/publicchat/in?token=${chatConfig.value.publicToken}&session_id=${store.state.value.sessionId}&first_connection=1`
-    );
+    socket = new WebSocket(websocketUrl);
     connectAttempt++;
 
     socket.onopen = function (e) {
@@ -127,7 +149,7 @@ export const createSocketConnection = () => {
       }
       // emitting new event so that the interface can update itself
       emitter.$emit("onclose");
-      debounce(reconnect, 100);
+      debounce(async () => await reconnect(), 100);
     };
 
     socket.onerror = function (error) {
@@ -141,5 +163,5 @@ export const createSocketConnection = () => {
     return socket;
   };
 
-  return createConnection();
+  return await createConnection();
 };
