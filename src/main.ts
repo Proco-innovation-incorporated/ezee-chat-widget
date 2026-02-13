@@ -37,8 +37,8 @@ declare const window: any;
       config.wsBaseUrl = "";
     }
 
-    const inPrivateMode = config.privateToken && config.userEmail;
-    if (!config.publicToken && !inPrivateMode) {
+    const isPrivateChat = config.privateToken && config.userEmail;
+    if (!config.publicToken && !isPrivateChat) {
       throw new Error("EZee Assist Agent requires either a Public Token or both the Private Token and a User Email");
     }
   

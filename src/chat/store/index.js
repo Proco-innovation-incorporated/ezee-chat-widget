@@ -102,10 +102,8 @@ const buildUrl = (baseUrl, pathname, params) => {
   return url;
 }
 
-const buildUrlPath = (chatConfig, pathTemplate) => {
-  const orgToken = chatConfig.value.privateToken || chatConfig.value.publicToken;
-  const isPrivateToken = orgToken === chatConfig.value.privateToken;
-  const pathSegment = isPrivateToken ? "streamchat" : "publicchat";
+const buildUrlPath = (pathTemplate) => {
+  const pathSegment = isPrivateChat() ? "streamchat" : "publicchat";
   return pathTemplate.replace("<pathSegment>", pathSegment);
 };
 
@@ -118,7 +116,7 @@ const loadOrgBranding = async () => {
 
   const url = buildUrl(
     chatConfig.value.apiBaseUrl,
-    buildUrlPath(chatConfig, "/api/<pathSegment>/org/branding"),
+    buildUrlPath("/api/<pathSegment>/org/branding"),
     {
       token: orgToken
     },
@@ -147,21 +145,20 @@ const loadOrgBranding = async () => {
       highlight_color: '#4e8cff',
     });
   }
-}
+};
 
 const getPrivateConnectToken = async () => {
   const { chatConfig } = mapState(["chatConfig"]);
   if (
     !chatConfig.value?.apiBaseUrl ||
-    !chatConfig.value.privateToken ||
-    !chatConfig.value?.userEmail
+    !isPrivateChat()
   ) {
     throw new Error('Cannot get User Connect Token . Set up configs before calling');
   }
 
   const url = buildUrl(
     chatConfig.value.apiBaseUrl,
-    buildUrlPath(chatConfig, "/api/<pathSegment>/org/auth"),
+    buildUrlPath("/api/<pathSegment>/org/auth"),
     {
       token: chatConfig.value.privateToken,
       email: chatConfig.value.userEmail,
@@ -180,14 +177,20 @@ const getPrivateConnectToken = async () => {
   catch(error) {
     console.error("Error gettting User Connect Token", error.message)
   }
-}
+};
+
+const isPrivateChat = () => {
+  const { chatConfig } = mapState(["chatConfig"]);
+  return (chatConfig.value?.privateToken && chatConfig.value?.userEmail);
+};
 
 export default store;
 export {
+  buildUrlPath,
+  closeSocketConnection,
+  getPrivateConnectToken,
+  isPrivateChat,
+  loadOrgBranding,
   mapState,
   sendSocketMessage,
-  closeSocketConnection,
-  loadOrgBranding,
-  buildUrlPath,
-  getPrivateConnectToken,
 };
