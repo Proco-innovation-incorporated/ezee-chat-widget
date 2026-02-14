@@ -28,7 +28,8 @@ declare const window: any;
         apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
         wsBaseUrl: import.meta.env.VITE_WS_BASE_URL,
         logoPathPrefix: "",
-        enableAttachments: false,
+        enableAttachments: undefined,
+        enableFeedback: undefined,
         useLogoForOpenIcon: false,
       },
       ...props,
@@ -41,6 +42,15 @@ declare const window: any;
     if (!config.publicToken && !isPrivateChat) {
       throw new Error("EZee Assist Agent requires either a Public Token or both the Private Token and a User Email");
     }
+
+    if (isPrivateChat) {
+      if (config.enableAttachments === undefined) {
+        config.enableAttachments = true;
+      }
+      if (config.enableFeedback === undefined) {
+        config.enableFeedback = true;
+      }
+    }
   
     store.setState("chatConfig", {
       ...config
@@ -52,6 +62,7 @@ declare const window: any;
       window.ezee.setupChatConfig({
         privateToken: import.meta.env.VITE_PRIVATE_TOKEN,
         userEmail: import.meta.env.VITE_PRIVATE_USER_EMAIL,
+        enableAttachments: true,
       });
     }
     else if (import.meta.env.VITE_PUBLIC_TOKEN) {
