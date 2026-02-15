@@ -66,9 +66,10 @@ import { parseBlocks, parseIncompleteMarkdown } from 'streamdown-vue';
 import { invertColor }  from "./colors";
 import { emitter } from "./chat/event/index.js";
 import store, {
+  getPrivateUploadUrl,
   isPrivateChat,
   mapState,
-  sendSocketMessage
+  sendSocketMessage,
 } from "./chat/store/index.js";
 
 function getMediaMessage(author, id, file) {
@@ -392,30 +393,15 @@ export default {
       
       // upload media
       if (isPrivateChat() && message.files?.length) {
-        // TODO BBORIE access token?!
-        /*
-        const access_token = store.tokens.access_token;
-        const presignedUrl = `${chatConfig.value.apiBaseUrl}/api/attachments/create/post-presigned-url/${chatConfig.value.org_token}?token=${access_token}`;
-        const presignedAttachments = message.files.map(({ name, type }) => {
-          return {
-            content_type: type,
-            name: name,
-          };
-        });
-        const presignedFilesDataRes = await fetch(
-          presignedUrl,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              attachments: presignedAttachments
-            }),
-          }
+        const presignedFilesData = await getPrivateUploadUrl(
+          message.files.map(({ name, type }) => {
+            return {
+              content_type: type,
+              name: name,
+            };
+          })
         );
         
-        const presignedFilesData = await presignedFilesDataRes.json();
         if (presignedFilesData?.attachments?.length) {
           presignedFilesData.attachments.forEach((attachment, index) => {
             const uploaded = this.uploadFileByS3PresignedURL(
@@ -432,7 +418,6 @@ export default {
             }
           });
         }
-        */
       }
 
       message.data.attachments = attachments.map(({ file_name }) => {

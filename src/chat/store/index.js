@@ -111,7 +111,7 @@ const loadOrgBranding = async () => {
   const { chatConfig } = mapState(["chatConfig"]);
   const orgToken = chatConfig.value.privateToken || chatConfig.value.publicToken;
   if (!chatConfig.value?.apiBaseUrl || !orgToken) {
-    throw new Error('Cannot fetch Org Branding. Set up configs before calling');
+    throw new Error('Cannot get Org Branding. Set up configs before calling');
   }
 
   const url = buildUrl(
@@ -146,6 +146,59 @@ const loadOrgBranding = async () => {
     });
   }
 };
+
+const getPrivateUploadUrl = async (attachments) => {
+  const { chatConfig } = mapState(["chatConfig"]);
+  const orgToken = chatConfig.value.privateToken || chatConfig.value.publicToken;
+  if (
+    !chatConfig.value?.apiBaseUrl ||
+    !isPrivateChat()
+  ) {
+    throw new Error('Cannot get Upload URL. Set up configs before calling');
+  }
+
+  const url = buildUrl(
+    chatConfig.value.apiBaseUrl,
+    buildUrlPath("/api/<pathSegment>/org/url/upload"),
+    {
+      token: chatConfig.value.privateToken,
+      email: chatConfig.value.userEmail,
+    },
+  );
+
+  try {
+    const response = await fetch(
+      url.toString(),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          attachments: attachments
+        }),
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const result = await response.json()
+    return result;
+  }
+  catch(error) {
+    console.error("Error loading Org branding", error.message)
+    store.setState("orgBranding", {
+      code: null,
+      name: null,
+      bot_name: null,
+      bot_icon: null,
+      org_logo: null,
+      legal: null,
+      highlight_color: '#4e8cff',
+    });
+  }
+}
 
 const getPrivateConnectToken = async () => {
   const { chatConfig } = mapState(["chatConfig"]);
@@ -189,6 +242,7 @@ export {
   buildUrlPath,
   closeSocketConnection,
   getPrivateConnectToken,
+  getPrivateUploadUrl,
   isPrivateChat,
   loadOrgBranding,
   mapState,
