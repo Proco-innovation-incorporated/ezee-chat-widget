@@ -15,18 +15,6 @@ let socket;
 let connectAttempt = 0;
 let attemptingConnection = false;
 
-export const debounce = (fn, wait = 500) => {
-  let timeoutId;
-  return (...args) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-      fn(...args);
-    }, wait);
-  };
-};
-
 export const reconnect = async (connectNow=false) => {
   if (attemptingConnection) {
     console.debug("Already attempting Websocket connection. Skipping");
@@ -150,7 +138,6 @@ export const createSocketConnection = async () => {
       }
       // emitting new event so that the interface can update itself
       emitter.$emit("onclose");
-      debounce(async () => await reconnect(), 100);
     };
 
     socket.onerror = function (error) {
