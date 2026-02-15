@@ -10,9 +10,14 @@
     <script type="module" src="/src/main.ts"></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        /* use this block to configure the chat component
+        // use this block to configure the chat component
+        // provide either publicToken or (privateToken and userEmail)
+        /*
         window.ezee.setupChatConfig({
-          publicToken: "",
+          publicToken: undefined,
+
+          privateToken: undefined,
+          userEmail: undefined,
         });
         */
         window.ezee.initChat();

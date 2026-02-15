@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: EZee Assist Public Chat Plugin
+ * Plugin Name: EZee Assist Chat Plugin
  * Description: A Vue.js-based chat plugin for WordPress.
- * Version: 0.0.20
+ * Version: 0.0.22
  * Author: EZee Assist
  */
 
@@ -33,8 +33,11 @@ if(!is_divi_builder_active() && !is_admin()) {
 
     // Retrieve the necessary data
     $public_token = isset($options['public_token']) ? esc_attr($options['public_token']) : '';
-  }
 
+    $private_token = isset($options['private_token']) ? esc_attr($options['private_token']) : '';
+    $current_user = wp_get_current_user();
+    $client_email_external = $current_user->user_email;
+  }
 
   add_action('wp_footer', 'chat_plugin_display');
 
@@ -45,10 +48,17 @@ if(!is_divi_builder_active() && !is_admin()) {
     // Retrieve necessary data
     $options = get_option('chat_plugin_settings');
 
+    $current_user = wp_get_current_user();
+    $client_email_external = $current_user->user_email;
+
     // Localize the script with data
     wp_localize_script('your-script-handle', 'pluginData', array(
-      'publicToken' => isset($options['public_token']) ? esc_js($options['public_token']) : '',
       'pluginBasePath' => esc_js(plugin_dir_url(__FILE__)),
+
+      'publicToken' => isset($options['public_token']) ? esc_js($options['public_token']) : '',
+
+      'privateToken' => isset($options['private_token']) ? esc_js($options['private_token']) : '',
+      'userEmail' => isset($options['private_token']) && isset($client_email_external) ? esc_js($client_email_external) : '',
     ));
   }
   add_action('wp_enqueue_scripts', 'enqueue_chat_plugin_script');
@@ -85,9 +95,18 @@ function chat_plugin_settings_page() {
       ?>
       <table class="form-table">
         <tr valign="top">
+          <th scope="row" colspan="2" style="text-align: left;">Provide only one Token</th>
+        </tr>
+        <tr valign="top">
           <th scope="row">Public Token</th>
           <td>
             <input type="text" name="chat_plugin_settings[public_token]" value="<?php echo isset($options['public_token']) ? esc_attr($options['public_token']) : ''; ?>" />
+          </td>
+        </tr>
+        <tr valign="top">
+          <th scope="row">Private Token</th>
+          <td>
+            <input type="text" name="chat_plugin_settings[private_token]" value="<?php echo isset($options['private_token']) ? esc_attr($options['private_token']) : ''; ?>" />
           </td>
         </tr>
       </table>
