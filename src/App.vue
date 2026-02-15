@@ -12,6 +12,7 @@
     :show-close-button="true"
     :show-launcher="true"
     :show-emoji="false"
+    :show-feedback="showFeedback"
     :show-file="showFile"
     :show-typing-indicator="showTypingIndicator"
     :show-edition="true"
@@ -64,23 +65,28 @@ import { parseBlocks, parseIncompleteMarkdown } from 'streamdown-vue';
 
 import { invertColor }  from "./colors";
 import { emitter } from "./chat/event/index.js";
-import store, { mapState, sendSocketMessage } from "./chat/store/index.js";
+import store, {
+  getPrivateUploadUrl,
+  isPrivateChat,
+  mapState,
+  sendSocketMessage,
+} from "./chat/store/index.js";
 
-function getMediaMessage(author, id, file) {
+function getMediaMessage(author, id, file, name) {
   return {
     type: "file",
     author: author,
     id: id + Math.random(),
     data: {
-      // text: `What about this one instead?? `,
       file: {
         url: file,
+        //name: name,
       },
-      // meta: '✓✓ Read'
     },
   };
 }
 
+/*
 function tryToGetMediaFromMessage(message) {
   const imageRegex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif))/gi;
   const fileRegex = /(https?:\/\/[^\s]+\.(?:pdf|docx|doc|xls|xlsx))/gi;
@@ -94,6 +100,7 @@ function tryToGetMediaFromMessage(message) {
     return getMediaMessage(message.author, message.message, item);
   });
 }
+*/
 
 export default {
   name: "App",
@@ -163,6 +170,7 @@ export default {
       messageStyling: true,
       userIsTyping: false,
       showFile: chatConfig.value?.enableAttachments || false,
+      showFeedback: chatConfig.value?.enableFeedback || false,
       types: {
         user: "me",
         bot: "bot",
@@ -243,14 +251,13 @@ export default {
       const processMessage = (!event.msg_type || this.types[event.msg_type]);
       if (!processMessage) return;
 
-      /* disabled for public chat
-      const media_urls = (
-        event.media_urls?.map(
-          (i) => getMediaMessage(`bot`, event.id, i.url)
-        ) || []
-      );
-      */
-      const media_urls = [];
+      let media_urls = [];
+      if (isPrivateChat()) {
+        // TODO BBORIE better presentation of media
+        media_urls = event.media_urls?.map(
+          (i) => getMediaMessage(`bot`, event.id, i.url, i.media_name)
+        ) || [];
+      }
 
       let response = event.response;
       const isStreamMessage = extras.message?.streaming === true;
@@ -345,10 +352,8 @@ export default {
         }
       }
 
-      this.messageList = [
-        ...this.messageList,
-        ...media_urls,
-      ];
+      this.messageList.push(...media_urls);
+      this.messageList = [...this.messageList];
 
       if (Object.keys(this.streamBuffers).length < 2) {
         this.showTypingIndicator = false;
@@ -385,31 +390,17 @@ export default {
 
       const attachments = [];
       
-      // TODO review and disable
-      /*
-      if (message.files?.length) {
-        const access_token = store.tokens.access_token;
-        const presignedUrl = `${chatConfig.value.apiBaseUrl}/api/attachments/create/post-presigned-url/${chatConfig.value.org_token}?token=${access_token}`;
-        const presignedAttachments = message.files.map(({ name, type }) => {
-                return {
-                  content_type: type,
-                  name: name,
-                };
-              });
-        const presignedFilesDataRes = await fetch(
-          presignedUrl,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              attachments: presignedAttachments
-            }),
-          }
+      // upload media
+      if (isPrivateChat() && message.files?.length) {
+        const presignedFilesData = await getPrivateUploadUrl(
+          message.files.map(({ name, type }) => {
+            return {
+              content_type: type,
+              name: name,
+            };
+          })
         );
         
-        const presignedFilesData = await presignedFilesDataRes.json();
         if (presignedFilesData?.attachments?.length) {
           presignedFilesData.attachments.forEach((attachment, index) => {
             const uploaded = this.uploadFileByS3PresignedURL(
@@ -427,7 +418,6 @@ export default {
           });
         }
       }
-      */
 
       message.data.attachments = attachments.map(({ file_name }) => {
         return {

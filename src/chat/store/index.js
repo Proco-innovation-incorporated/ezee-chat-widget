@@ -92,15 +92,38 @@ function closeSocketConnection() {
   store.socket = null;
 }
 
-async function loadOrgBranding() {
-  const { chatConfig } = mapState(["chatConfig"]);
-  if (!chatConfig.value?.apiBaseUrl) {
-    throw new Error('Cannot fetch Org Branding. Set up configs before calling');
+const buildUrl = (baseUrl, pathname, params) => {
+  const url = new URL(baseUrl);
+  url.pathname = pathname;
+  for (const key in params) {
+    url.searchParams.set(key, params[key]);
   }
-  const url = `${chatConfig.value.apiBaseUrl}/api/publicchat/org/branding?token=${chatConfig.value.publicToken}`
+
+  return url;
+}
+
+const buildUrlPath = (pathTemplate) => {
+  const pathSegment = isPrivateChat() ? "streamchat" : "publicchat";
+  return pathTemplate.replace("<pathSegment>", pathSegment);
+};
+
+const loadOrgBranding = async () => {
+  const { chatConfig } = mapState(["chatConfig"]);
+  const orgToken = chatConfig.value.privateToken || chatConfig.value.publicToken;
+  if (!chatConfig.value?.apiBaseUrl || !orgToken) {
+    throw new Error('Cannot get Org Branding. Set up configs before calling');
+  }
+
+  const url = buildUrl(
+    chatConfig.value.apiBaseUrl,
+    buildUrlPath("/api/<pathSegment>/org/branding"),
+    {
+      token: orgToken
+    },
+  );
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url.toString());
     if (!response.ok) {
       throw new Error(`Response status: ${response.status}`);
     }
@@ -122,12 +145,106 @@ async function loadOrgBranding() {
       highlight_color: '#4e8cff',
     });
   }
+};
+
+const getPrivateUploadUrl = async (attachments) => {
+  const { chatConfig } = mapState(["chatConfig"]);
+  const orgToken = chatConfig.value.privateToken || chatConfig.value.publicToken;
+  if (
+    !chatConfig.value?.apiBaseUrl ||
+    !isPrivateChat()
+  ) {
+    throw new Error('Cannot get Upload URL. Set up configs before calling');
+  }
+
+  const url = buildUrl(
+    chatConfig.value.apiBaseUrl,
+    buildUrlPath("/api/<pathSegment>/org/url/upload"),
+    {
+      token: chatConfig.value.privateToken,
+      email: chatConfig.value.userEmail,
+    },
+  );
+
+  try {
+    const response = await fetch(
+      url.toString(),
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          attachments: attachments
+        }),
+      }
+    );
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const result = await response.json()
+    return result;
+  }
+  catch(error) {
+    console.error("Error loading Org branding", error.message)
+    store.setState("orgBranding", {
+      code: null,
+      name: null,
+      bot_name: null,
+      bot_icon: null,
+      org_logo: null,
+      legal: null,
+      highlight_color: '#4e8cff',
+    });
+  }
 }
+
+const getPrivateConnectToken = async () => {
+  const { chatConfig } = mapState(["chatConfig"]);
+  if (
+    !chatConfig.value?.apiBaseUrl ||
+    !isPrivateChat()
+  ) {
+    throw new Error('Cannot get User Connect Token . Set up configs before calling');
+  }
+
+  const url = buildUrl(
+    chatConfig.value.apiBaseUrl,
+    buildUrlPath("/api/<pathSegment>/org/auth"),
+    {
+      token: chatConfig.value.privateToken,
+      email: chatConfig.value.userEmail,
+    },
+  );
+
+  try {
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const result = await response.json()
+    return result.token;
+  }
+  catch(error) {
+    console.error("Error gettting User Connect Token", error.message)
+  }
+};
+
+const isPrivateChat = () => {
+  const { chatConfig } = mapState(["chatConfig"]);
+  return (chatConfig.value?.privateToken && chatConfig.value?.userEmail);
+};
 
 export default store;
 export {
+  buildUrlPath,
+  closeSocketConnection,
+  getPrivateConnectToken,
+  getPrivateUploadUrl,
+  isPrivateChat,
+  loadOrgBranding,
   mapState,
   sendSocketMessage,
-  closeSocketConnection,
-  loadOrgBranding
 };

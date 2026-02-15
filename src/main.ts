@@ -20,11 +20,16 @@ declare const window: any;
     const config = {
       ...{
         publicToken: undefined,
-        botTitle: "EZee Assist Public Agent",
+
+        privateToken: undefined,
+        userEmail: undefined,
+
+        botTitle: "EZee Assist Agent",
         apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
         wsBaseUrl: import.meta.env.VITE_WS_BASE_URL,
         logoPathPrefix: "",
-        enableAttachments: false,
+        enableAttachments: undefined,
+        enableFeedback: undefined,
         useLogoForOpenIcon: false,
       },
       ...props,
@@ -33,8 +38,18 @@ declare const window: any;
       config.wsBaseUrl = "";
     }
 
-    if (!config.publicToken) {
-      throw new Error("Ezee Assist Public Agent requires a Public Token");
+    const isPrivateChat = config.privateToken && config.userEmail;
+    if (!config.publicToken && !isPrivateChat) {
+      throw new Error("EZee Assist Agent requires either a Public Token or both the Private Token and a User Email");
+    }
+
+    if (isPrivateChat) {
+      if (config.enableAttachments === undefined) {
+        config.enableAttachments = true;
+      }
+      if (config.enableFeedback === undefined) {
+        config.enableFeedback = true;
+      }
     }
   
     store.setState("chatConfig", {
@@ -42,10 +57,19 @@ declare const window: any;
     });
   };
 
-  if (isDevMode && import.meta.env.VITE_PUBLIC_TOKEN) {
-    window.ezee.setupChatConfig({
-      publicToken: import.meta.env.VITE_PUBLIC_TOKEN,
-    });
+  if (isDevMode) {
+    if (import.meta.env.VITE_PRIVATE_TOKEN && import.meta.env.VITE_PRIVATE_USER_EMAIL) {
+      window.ezee.setupChatConfig({
+        privateToken: import.meta.env.VITE_PRIVATE_TOKEN,
+        userEmail: import.meta.env.VITE_PRIVATE_USER_EMAIL,
+        enableAttachments: true,
+      });
+    }
+    else if (import.meta.env.VITE_PUBLIC_TOKEN) {
+      window.ezee.setupChatConfig({
+        publicToken: import.meta.env.VITE_PUBLIC_TOKEN,
+      });
+    }
   }
 
   window.ezee.initChat = async () => {

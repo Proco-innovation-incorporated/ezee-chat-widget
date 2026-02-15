@@ -127,7 +127,7 @@
       }"
     >
       <div>
-        Connection to the server lost (id {{ error }});
+        Connection to the server lost.
         <a class="reconnect-button" @click.native.prevent="reconnect">
           Click here to reconnect
         </a>
