@@ -39,16 +39,11 @@ export const reconnect = async (connectNow=false) => {
     catch(e) {}
   }
   else {
-    const sleepFor = Math.min(
-      backoffFactor * Math.pow(2, connectAttempt),
-      maxBackoffSleep
-    );
-    console.debug("Backing off before retrying Websocket connection", connectAttempt, sleepFor);
     const promise = new Promise((resolve) => {
       setTimeout(() => {
         console.log("Retrying Websocket connection");
         resolve("");
-      }, sleepFor * 1000);
+      }, 0);
     });
     promise.then(async () => {
       try {
@@ -63,7 +58,6 @@ export const createSocketConnection = async () => {
 
   const buildUrl = async () => {
     const { chatConfig } = mapState(["chatConfig"]);
-
 
     const url = new URL(chatConfig.value.wsBaseUrl);
     url.pathname = buildUrlPath("/api/<pathSegment>/in");
@@ -118,7 +112,7 @@ export const createSocketConnection = async () => {
       }
     };
 
-    socket.onclose = function (event) {
+    socket.onclose = async function (event) {
       console.log('socket closed');
       if (event.wasClean) {
         store.setState("error", 1005);
@@ -138,6 +132,7 @@ export const createSocketConnection = async () => {
       }
       // emitting new event so that the interface can update itself
       emitter.$emit("onclose");
+      //await reconnect();
     };
 
     socket.onerror = function (error) {

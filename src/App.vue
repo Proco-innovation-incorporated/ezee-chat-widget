@@ -72,21 +72,21 @@ import store, {
   sendSocketMessage,
 } from "./chat/store/index.js";
 
-function getMediaMessage(author, id, file) {
+function getMediaMessage(author, id, file, name) {
   return {
     type: "file",
     author: author,
     id: id + Math.random(),
     data: {
-      // text: `What about this one instead?? `,
       file: {
         url: file,
+        //name: name,
       },
-      // meta: '✓✓ Read'
     },
   };
 }
 
+/*
 function tryToGetMediaFromMessage(message) {
   const imageRegex = /(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif))/gi;
   const fileRegex = /(https?:\/\/[^\s]+\.(?:pdf|docx|doc|xls|xlsx))/gi;
@@ -100,6 +100,7 @@ function tryToGetMediaFromMessage(message) {
     return getMediaMessage(message.author, message.message, item);
   });
 }
+*/
 
 export default {
   name: "App",
@@ -250,11 +251,11 @@ export default {
       const processMessage = (!event.msg_type || this.types[event.msg_type]);
       if (!processMessage) return;
 
-      let media_urls = []
+      let media_urls = [];
       if (isPrivateChat()) {
         // TODO BBORIE better presentation of media
         media_urls = event.media_urls?.map(
-          (i) => getMediaMessage(`bot`, event.id, i.url)
+          (i) => getMediaMessage(`bot`, event.id, i.url, i.media_name)
         ) || [];
       }
 
@@ -351,10 +352,8 @@ export default {
         }
       }
 
-      this.messageList = [
-        ...this.messageList,
-        ...media_urls,
-      ];
+      this.messageList.push(...media_urls);
+      this.messageList = [...this.messageList];
 
       if (Object.keys(this.streamBuffers).length < 2) {
         this.showTypingIndicator = false;
