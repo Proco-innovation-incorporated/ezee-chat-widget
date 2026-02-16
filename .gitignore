@@ -26,3 +26,5 @@ releases/
 
 chat-plugin.zip
 dist.zip
+dev-dist.zip
+prod-dist.zip

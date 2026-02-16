@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
   window.ezee.setupChatConfig({
-    publicToken: pluginData.publicToken,
     wordpressPluginPath: (
       pluginData.pluginBasePath ?
         `${pluginData.pluginBasePath}assets` :
@@ -8,6 +7,11 @@ document.addEventListener("DOMContentLoaded", function () {
           window.pluginPath || '/wp-content/plugins/chat-plugin/assets'
         )
     ),
+
+    publicToken: pluginData.publicToken,
+
+    privateToken: pluginData.privateToken,
+    userEmail: pluginData.userEmail,
   });
   window.ezee.initChat();
 });
