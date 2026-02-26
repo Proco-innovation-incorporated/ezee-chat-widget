@@ -30,6 +30,7 @@ export function applyChatTweaks() {
   });
 
   viewportContent.set("maximum-scale", "1.0");
+  viewportContent.set("interactive-widget", "resizes-content");
 
   const contentArray = [];
   viewportContent.forEach((value, key) => {
