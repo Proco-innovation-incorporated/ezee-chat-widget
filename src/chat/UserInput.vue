@@ -188,6 +188,7 @@ import IconSend from "./components/icons/IconSend.vue";
 import { emitter } from "./event/index.js";
 import { ErrorTypes } from "../error.js";
 import { reconnect as reconnectNow } from "./socket/index.js";
+import { addInputTweaks, removeInputTweaks } from "./mobile.js";
 
 export default {
   components: {
@@ -309,6 +310,12 @@ export default {
     },
     setInputActive(onoff) {
       this.inputActive = onoff;
+      if (onoff) {
+        addInputTweaks();
+      }
+      else {
+        removeInputTweaks();
+      }
     },
     handleKey(event) {
       if (event.keyCode === 13 && !event.shiftKey) {

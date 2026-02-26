@@ -78,7 +78,7 @@ declare const window: any;
     await loadOrgBranding();
 
     const shadowRoot = document.createElement("div");
-    shadowRoot.id = "shadow-root"
+    shadowRoot.id = "ezee-chat-shadow-root"
     shadowRoot.className = "shadow-root"
     shadowRoot.style.position = "absolute";
     shadowRoot.style.zIndex = "999999";

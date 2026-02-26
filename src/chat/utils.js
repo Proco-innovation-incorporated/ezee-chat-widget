@@ -114,3 +114,10 @@ export function truncateString(str, length, defaultValue = "") {
   }
   return str;
 }
+
+export function getRootChatContainer() {
+  // now the hardcoded ezee-chat-shadow-root element id
+  return document.getElementById(
+    "ezee-chat-shadow-root"
+  ).shadowRoot.getElementById("chat");
+}

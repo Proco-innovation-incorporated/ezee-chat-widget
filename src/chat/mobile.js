@@ -1,3 +1,5 @@
+import { getRootChatContainer } from "./utils.js";
+
 export function treatAsMobile() {
   // 450 is based upon our CSS for media with max width of 450
   return Math.min(screen.availWidth, screen.availHeight) < 450;
@@ -59,4 +61,34 @@ export function removeChatTweaks() {
 
   console.log(lastViewportContent);
   lastViewportContent = undefined;
+}
+
+let viewportEventListener;
+export function addInputTweaks() {
+  /*
+  if (!treatAsMobile()) return;
+  if (viewportEventListener) return;
+
+  viewportEventListener = window.visualViewport.addEventListener("resize", () => {
+    if (window.visualViewport.height / window.innerHeight < 0.1) return;
+    const chatContainer = getRootChatContainer();
+    const chatWindow = chatContainer.getElementsByClassName("sc-chat-window")[0];
+    // TODO THIS DOESN'T WORK QUITE RIGHT
+    chatWindow.style.height = `${window.visualViewport.height}px`;
+  });
+  */
+}
+
+export function removeInputTweaks() {
+  /*
+  if (!treatAsMobile()) return;
+  if (!viewportEventListener) return;
+
+  const chatContainer = getRootChatContainer();
+  const chatWindow = chatElement.getElementsByClassName("sc-chat-window")[0];
+  chatWindow.style.height = null;
+
+  window.visualViewport.removeEventListener("resize", viewportEventListener);
+  viewportEventListener = undefined;
+  */
 }
