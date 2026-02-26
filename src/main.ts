@@ -7,10 +7,12 @@ import App from "./App.vue";
 import Launcher from "./chat/Launcher.vue";
 import store, { loadOrgBranding } from "./chat/store";
 import "./chat/socket";
+//import { applyTweaks } from "./chat/mobile";
 
 declare const window: any;
 
-(function (){
+(function () {
+  //applyTweaks();
   const isDevMode: boolean = import.meta.env.MODE === "development";
 
   window.ezee = window.ezee || {};

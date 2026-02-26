@@ -82,6 +82,7 @@
 
 <script>
 import { mapState } from './store/';
+import { applyChatTweaks, removeChatTweaks } from "./mobile";
 
 import Header from "./Header.vue";
 import MessageList from "./MessageList.vue";
@@ -168,9 +169,16 @@ export default {
   },
   watch: {
     // Watch the 'message' prop
-    // isOpen(newVal, oldVal) {
-    //   this.$refs.messagesList._scrollDown();
-    // },
+    isOpen(newVal, oldVal) {
+      //this.$refs.messagesList._scrollDown();
+
+      if (newVal === true) {
+        applyChatTweaks();
+      }
+      else {
+        removeChatTweaks();
+      }
+    },
   },
   data() {
     return {
