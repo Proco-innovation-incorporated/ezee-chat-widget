@@ -1,6 +1,6 @@
 import store, {
   buildUrlPath,
-  getPrivateConnectToken,
+  getUserToken,
   isPrivateChat,
   mapState
 }  from "../store/index.js";
@@ -63,8 +63,8 @@ export const createSocketConnection = async () => {
     url.pathname = buildUrlPath("/api/<pathSegment>/in");
 
     if (isPrivateChat()) {
-      const connectToken = await getPrivateConnectToken();
-      url.searchParams.set("token", connectToken);
+      const userToken = await getUserToken();
+      url.searchParams.set("token", userToken);
     }
     else {
       url.searchParams.set("token", chatConfig.value.publicToken);
