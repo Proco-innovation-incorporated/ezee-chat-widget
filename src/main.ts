@@ -19,10 +19,18 @@ declare const window: any;
   window.ezee.setupChatConfig = (props: any = {}) => {
     const config = {
       ...{
+        // one of...
+
         publicToken: undefined,
+
+        // or...
 
         privateToken: undefined,
         userEmail: undefined,
+
+        // or...
+
+        userToken: undefined,
 
         botTitle: "EZee Assist Agent",
         apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
@@ -38,9 +46,9 @@ declare const window: any;
       config.wsBaseUrl = "";
     }
 
-    const isPrivateChat = config.privateToken && config.userEmail;
+    const isPrivateChat = (config.privateToken || config.userToken);
     if (!config.publicToken && !isPrivateChat) {
-      throw new Error("EZee Assist Agent requires either a Public Token or both the Private Token and a User Email");
+      throw new Error("EZee Assist Agent cannot start. Missing required settings");
     }
 
     if (isPrivateChat) {
@@ -58,10 +66,16 @@ declare const window: any;
   };
 
   if (isDevMode) {
-    if (import.meta.env.VITE_PRIVATE_TOKEN && import.meta.env.VITE_PRIVATE_USER_EMAIL) {
+    if (import.meta.env.VITE_USER_TOKEN) {
+      window.ezee.setupChatConfig({
+        userToken: import.meta.env.VITE_USER_TOKEN,
+        enableAttachments: true,
+      });
+    }
+    else if (import.meta.env.VITE_PRIVATE_TOKEN) {
       window.ezee.setupChatConfig({
         privateToken: import.meta.env.VITE_PRIVATE_TOKEN,
-        userEmail: import.meta.env.VITE_PRIVATE_USER_EMAIL,
+        userEmail: import.meta.env.VITE_PRIVATE_USER_EMAIL || null,
         enableAttachments: true,
       });
     }
