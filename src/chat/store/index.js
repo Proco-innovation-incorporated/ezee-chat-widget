@@ -16,12 +16,6 @@ const store = {
     isMessageSending: true,
     sessionId: null,
   }),
-  /*
-  tokens: {
-    access_token: null,
-    refresh_token: null,
-  },
-  */
   socket: null,
   setSocket(socket) {
     this.socket = socket;
@@ -109,8 +103,8 @@ const buildUrlPath = (pathTemplate) => {
 
 const loadOrgBranding = async () => {
   const { chatConfig } = mapState(["chatConfig"]);
-  const orgToken = chatConfig.value.privateToken || chatConfig.value.publicToken;
-  if (!chatConfig.value?.apiBaseUrl || !orgToken) {
+  const authToken = await getAuthToken();
+  if (!chatConfig.value?.apiBaseUrl || !authToken) {
     throw new Error('Cannot get Org Branding. Set up configs before calling');
   }
 
@@ -118,7 +112,7 @@ const loadOrgBranding = async () => {
     chatConfig.value.apiBaseUrl,
     buildUrlPath("/api/<pathSegment>/org/branding"),
     {
-      token: orgToken
+      token: authToken
     },
   );
 
@@ -149,7 +143,7 @@ const loadOrgBranding = async () => {
 
 const getPrivateUploadUrl = async (attachments) => {
   const { chatConfig } = mapState(["chatConfig"]);
-  const orgToken = chatConfig.value.privateToken || chatConfig.value.publicToken;
+  const authToken = await getAuthToken();
   if (
     !chatConfig.value?.apiBaseUrl ||
     !isPrivateChat()
@@ -161,8 +155,8 @@ const getPrivateUploadUrl = async (attachments) => {
     chatConfig.value.apiBaseUrl,
     buildUrlPath("/api/<pathSegment>/org/url/upload"),
     {
-      token: chatConfig.value.privateToken,
-      email: chatConfig.value.userEmail,
+      token: authToken,
+      email: chatConfig.value.userEmail || "",
     },
   );
 
@@ -200,7 +194,7 @@ const getPrivateUploadUrl = async (attachments) => {
   }
 }
 
-const getPrivateConnectToken = async () => {
+const getUserToken = async () => {
   const { chatConfig } = mapState(["chatConfig"]);
   if (
     !chatConfig.value?.apiBaseUrl ||
@@ -208,13 +202,16 @@ const getPrivateConnectToken = async () => {
   ) {
     throw new Error('Cannot get User Connect Token . Set up configs before calling');
   }
+  else if (chatConfig.value.userToken) {
+    return chatConfig.value.userToken;
+  }
 
   const url = buildUrl(
     chatConfig.value.apiBaseUrl,
     buildUrlPath("/api/<pathSegment>/org/auth"),
     {
       token: chatConfig.value.privateToken,
-      email: chatConfig.value.userEmail,
+      email: chatConfig.value.userEmail || "",
     },
   );
 
@@ -232,16 +229,35 @@ const getPrivateConnectToken = async () => {
   }
 };
 
+const getAuthToken = async () => {
+  const { chatConfig } = mapState(["chatConfig"]);
+
+  if (chatConfig.value?.userToken) {
+    return chatConfig.value.userToken;
+  }
+  else if (chatConfig.value?.privateToken) {
+    if (chatConfig.value?.userEmail) {
+      return chatConfig.value.privateToken;
+    }
+    else {
+      return await getUserToken();
+    }
+  }
+  else {
+    return chatConfig.value?.publicToken;
+  }
+};
+
 const isPrivateChat = () => {
   const { chatConfig } = mapState(["chatConfig"]);
-  return (chatConfig.value?.privateToken && chatConfig.value?.userEmail);
+  return (chatConfig.value?.userToken || chatConfig.value?.privateToken);
 };
 
 export default store;
 export {
   buildUrlPath,
   closeSocketConnection,
-  getPrivateConnectToken,
+  getUserToken,
   getPrivateUploadUrl,
   isPrivateChat,
   loadOrgBranding,
