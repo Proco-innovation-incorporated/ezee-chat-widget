@@ -11,13 +11,20 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         // use this block to configure the chat component
-        // provide either publicToken or (privateToken and userEmail)
         /*
         window.ezee.setupChatConfig({
+
+          // provide one of ...
+
+          // OPTION 1: public token or ...
           publicToken: undefined,
 
+          // OPTION 2: private token AND userEmail or ...
           privateToken: undefined,
           userEmail: undefined,
+
+          // OPTION 3: user token
+          userToken: undefined,
         });
         */
         window.ezee.initChat();

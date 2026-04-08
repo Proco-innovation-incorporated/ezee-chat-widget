@@ -131,6 +131,7 @@ export default {
       wholeMessageMap: new Map(),
       newMessagesCount: 0,
       isChatOpen: false,
+      userClosedChat: false,
       showTypingIndicator: true,
       colors: {
         errorInfo: {
@@ -204,6 +205,14 @@ export default {
   mounted() {
     emitter.$on("onopen", (event) => {
       //console.log('socket opened event');
+      const { chatConfig } = mapState(["chatConfig"]);
+      if (
+        chatConfig.value?.openWhenReady &&
+        !this.isChatOpen &&
+        !this.userClosedChat
+      ) {
+        this.openChat();
+      }
     });
 
     emitter.$on("onclose", (event) => {
@@ -445,6 +454,7 @@ export default {
     },
     closeChat() {
       this.isChatOpen = false;
+      this.userClosedChat = true;
     },
     /*
     setColor(color) {
