@@ -40,6 +40,32 @@ if(!is_divi_builder_active() && !is_admin()) {
 
   add_action('wp_footer', 'chat_plugin_display');
 
+  function get_user_token($private_token, $client_email) {
+    $api_url = 'https://channel.prod.ezeeassist.io';
+    $url = "$api_url/api/streamchat/org/auth?token=$private_token&email=$client_email";
+
+    $ch = curl_init();
+
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // You might want to turn this on in production
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); // You might want to turn this on in production
+
+    $response = curl_exec($ch);
+
+    if (curl_errno($ch)) {
+      echo 'Error:' . curl_error($ch);
+      return null;
+    }
+
+    curl_close($ch);
+
+    $auth_response = json_decode($response, true);
+
+    return isset($auth_response['token']) ? $auth_response['token'] : null;
+  }
+
   function enqueue_chat_plugin_script() {
     // Enqueue your JavaScript file
     wp_enqueue_script('your-script-handle', plugin_dir_url(__FILE__).'assets/js/application-exec.js');
@@ -50,15 +76,43 @@ if(!is_divi_builder_active() && !is_admin()) {
     $current_user = wp_get_current_user();
     $client_email_external = $current_user->user_email;
 
+    $is_public_chat = isset($options['public_token']);
+    $is_private_chat = isset($options['private_token']);
+    $has_user_email = isset($client_email_external);
+
+    // Call api for user token
+    $user_token = $is_private_chat) && $has_user_email ? get_user_token($options['private_token'], $client_email_external) : null;
+    $has_user_token = isset($user_token);
+
     // Localize the script with data
-    wp_localize_script('your-script-handle', 'pluginData', array(
-      'pluginBasePath' => esc_js(plugin_dir_url(__FILE__)),
+    if ($has_user_token) {
+      wp_localize_script('your-script-handle', 'pluginData', array(
+        'pluginBasePath' => esc_js(plugin_dir_url(__FILE__)),
+        'publicToken' => '',
+        'privateToken' => '',
+        'userEmail' => '',
+        'userToken' => esc_js($user_token),
+      ));
+    }
+    elseif ($is_private_chat) {
+      wp_localize_script('your-script-handle', 'pluginData', array(
+        'pluginBasePath' => esc_js(plugin_dir_url(__FILE__)),
+        'publicToken' => '',
+        'privateToken' => esc_js($options['private_token']),
+        'userEmail' => $has_user_email ? esc_js($client_email_external) : '',
+        'userToken' => '',
+      ));
+    }
+    elseif ($is_public_chat) {
+      wp_localize_script('your-script-handle', 'pluginData', array(
+        'pluginBasePath' => esc_js(plugin_dir_url(__FILE__)),
+        'publicToken' => esc_js($options['public_token']),
+        'privateToken' => '',
+        'userEmail' => '',
+        'userToken' => '',
+      ));
+    }
 
-      'publicToken' => isset($options['public_token']) ? esc_js($options['public_token']) : '',
-
-      'privateToken' => isset($options['private_token']) ? esc_js($options['private_token']) : '',
-      'userEmail' => isset($options['private_token']) && isset($client_email_external) ? esc_js($client_email_external) : '',
-    ));
   }
   add_action('wp_enqueue_scripts', 'enqueue_chat_plugin_script');
 }

@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     privateToken: pluginData.privateToken,
     userEmail: pluginData.userEmail,
+
+    userToken: pluginData.userToken,
   });
   window.ezee.initChat();
 });
