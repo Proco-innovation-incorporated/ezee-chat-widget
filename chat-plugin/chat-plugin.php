@@ -81,7 +81,7 @@ if(!is_divi_builder_active() && !is_admin()) {
     $has_user_email = isset($client_email_external);
 
     // Call api for user token
-    $user_token = $is_private_chat) ? get_user_token($options['private_token'], $client_email_external) : null;
+    $user_token = $is_private_chat) && $has_user_email ? get_user_token($options['private_token'], $client_email_external) : null;
     $has_user_token = isset($user_token);
 
     // Localize the script with data
