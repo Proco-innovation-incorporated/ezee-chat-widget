@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
     build: {
       manifest: notProduction,
       sourcemap: notProduction ? 'inline' : false,
-      minify: notProduction ? false : 'terser',
+      minify: false,
       chunkSizeWarningLimit: 5000,
       rollupOptions: {
         output: {
