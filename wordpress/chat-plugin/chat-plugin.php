@@ -19,8 +19,13 @@ if(defined('DOING_CRON') || defined('REST_REQUEST')) {
 
 if(!is_divi_builder_active() && !is_admin()) {
   function chat_plugin_enqueue_scripts() {
-    wp_enqueue_script('chat-plugin-app', plugin_dir_url(__FILE__) . 'assets/js/widget-app.js', [], null, true);
-
+    wp_enqueue_script(
+      'chat-plugin-app',
+      plugin_dir_url(__FILE__) . 'assets/js/widget-app.js',
+      [],
+      'VERSION_PLACEHOLDER',
+      true
+    );
   }
   add_action('wp_enqueue_scripts', 'chat_plugin_enqueue_scripts');
 
@@ -68,7 +73,12 @@ if(!is_divi_builder_active() && !is_admin()) {
 
   function enqueue_chat_plugin_script() {
     // Enqueue your JavaScript file
-    wp_enqueue_script('your-script-handle', plugin_dir_url(__FILE__).'assets/js/application-exec.js');
+    wp_enqueue_script(
+      'your-script-handle',
+      plugin_dir_url(__FILE__).'assets/js/application-exec.js',
+      [],
+      'VERSION_PLACEHOLDER',
+    );
 
     // Retrieve necessary data
     $options = get_option('chat_plugin_settings');

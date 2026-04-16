@@ -26238,7 +26238,7 @@ $$` : `${e}$$`;
           enableAttachments: void 0,
           enableFeedback: void 0,
           useLogoForOpenIcon: false,
-          openWhenReady: true
+          openWhenReady: false
         },
         ...props
       };

@@ -27,7 +27,7 @@ echo "Building in $MODE mode..."
 
 # Define paths
 #JS_FILE_PATH="./chat-plugin/assets/js/application-exec.js"
-#PHP_FILE_PATH="./chat-plugin/chat-plugin.php"
+#PHP_FILE_PATH="./wordpress/chat-plugin/chat-plugin.php"
 
 # Update the JavaScript file with the correct API base URL
 #sed -i "s|window.apiBaseUrl = '.*';|window.apiBaseUrl = '$API_URL';|g" "$JS_FILE_PATH"
@@ -49,15 +49,18 @@ echo "Building in $MODE mode..."
 
 vite build --mode "$MODE"
 
-cp ./dist/assets/index-*.js ./chat-plugin/assets/js/widget-app.js
-cp ./dist/assets/index-*.css ./chat-plugin/assets/css/widget-style.css
+cp ./dist/assets/index-*.js ./wordpress/chat-plugin/assets/js/widget-app.js
+cp ./dist/assets/index-*.css ./wordpress/chat-plugin/assets/css/widget-style.css
 
 # Create a release folder based on the mode
 RELEASE_DIR="./releases/chat-plugin-$MODE-$(date +%s)"
 mkdir -p "$RELEASE_DIR"
 
 # Copy the entire chat-plugin directory to the release folder
-cp -r ./chat-plugin/* "$RELEASE_DIR"
+cp -r ./wordpress/chat-plugin/* "$RELEASE_DIR"
+
+THE_VERSION=$(date +v%Y.%m.%d+%s)
+sed -i -E "s/VERSION_PLACEHOLDER/$THE_VERSION/g" "$RELEASE_DIR/chat-plugin.php"
 
 echo "Release directory created at $RELEASE_DIR"
 
