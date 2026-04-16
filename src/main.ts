@@ -39,7 +39,7 @@ declare const window: any;
         enableAttachments: undefined,
         enableFeedback: undefined,
         useLogoForOpenIcon: false,
-        openWhenReady: true,
+        openWhenReady: false,
       },
       ...props,
     };
